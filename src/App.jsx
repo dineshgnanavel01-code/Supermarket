@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import LoadingScreen from "./components/LoadingScreen";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import { ShopProvider } from "./context/ShopContext";
+
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
-import Categories from "./pages/Categories";
-import Deals from "./pages/Deals";
-import About from "./pages/About";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Wishlist from "./pages/Wishlist";
 import Account from "./pages/Account";
+import OrderSuccess from "./pages/OrderSuccess";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -21,122 +21,50 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 2400);
+    }, 1800);
 
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <AnimatePresence mode="wait">
-      {loading ? (
-        <motion.div
-          key="loading"
-          exit={{
-            opacity: 0,
-            scale: 0.98,
-          }}
-          transition={{
-            duration: 0.5,
-            ease: "easeInOut",
-          }}
+    <>
+      <AnimatePresence mode="wait">
+        {loading && <LoadingScreen />}
+      </AnimatePresence>
+
+      {!loading && <ShopApp />}
+    </>
+  );
+}
+
+function ShopApp() {
+  const location = useLocation();
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+      <Navbar />
+
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={location.pathname + location.search}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <LoadingScreen />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="website"
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          transition={{
-            duration: 0.5,
-          }}
-          className="min-h-screen"
-        >
-          <ShopProvider>
-            <BrowserRouter>
-              <Navbar />
+          <Routes location={location}>
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetails />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/order-success" element={<OrderSuccess />} />
+          </Routes>
+        </motion.main>
+      </AnimatePresence>
 
-              <Routes>
-                {/* Home */}
-                <Route
-                  path="/"
-                  element={<Home />}
-                />
-
-                {/* Products */}
-                <Route
-                  path="/products"
-                  element={<Products />}
-                />
-
-                {/* Product Details */}
-                <Route
-                  path="/products/:id"
-                  element={<ProductDetails />}
-                />
-
-                {/* Categories */}
-                <Route
-                  path="/categories"
-                  element={<Categories />}
-                />
-
-                {/* Deals */}
-                <Route
-                  path="/deals"
-                  element={<Deals />}
-                />
-
-                {/* About */}
-                <Route
-                  path="/about"
-                  element={<About />}
-                />
-
-                {/* Cart */}
-                <Route
-                  path="/cart"
-                  element={<Cart />}
-                />
-
-                {/* Account */}
-                <Route
-                  path="/account"
-                  element={<Account />}
-                />
-
-                {/* 404 */}
-                <Route
-                  path="*"
-                  element={
-                    <div className="flex min-h-[60vh] items-center justify-center px-6">
-                      <div className="text-center">
-                        <h1 className="text-6xl font-black text-green-600">
-                          404
-                        </h1>
-
-                        <h2 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
-                          Page Not Found
-                        </h2>
-
-                        <p className="mt-2 text-slate-500">
-                          The page you are looking for doesn't exist.
-                        </p>
-                      </div>
-                    </div>
-                  }
-                />
-              </Routes>
-
-              <Footer />
-            </BrowserRouter>
-          </ShopProvider>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <Footer />
+    </div>
   );
 }

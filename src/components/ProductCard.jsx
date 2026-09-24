@@ -1,207 +1,145 @@
+
 import { motion } from "framer-motion";
 import {
   Heart,
   ShoppingCart,
-  Eye,
   Star,
 } from "lucide-react";
-
+import { Link } from "react-router-dom";
 import { useShop } from "../context/ShopContext";
 
-export default function ProductCard({ product, onQuickView }) {
-  const {
-    addToCart,
-    wishlist,
-    toggleWishlist,
-  } = useShop();
+export default function ProductCard({ product }) {
+  const { add, toggleWish, wishlist } = useShop();
 
-  const isWishlisted = wishlist.some(
-    (item) => item.id === product.id
-  );
+  const liked = wishlist.some((item) => item.id === product.id);
+
+  // Calculate discount percentage
+  const discountPercent = product.oldPrice
+    ? Math.round(
+        ((product.oldPrice - product.price) / product.oldPrice) * 100
+      )
+    : null;
 
   return (
     <motion.article
-      initial={{
-        opacity: 0,
-        y: 40,
-      }}
-      whileInView={{
-        opacity: 1,
-        y: 0,
-      }}
-      viewport={{ once: true, amount: 0.15 }}
       whileHover={{
-        y: -12,
-        rotateX: 2,
-        rotateY: -2,
-        scale: 1.015,
+        y: -8,
+        transition: {
+          duration: 0.25,
+          ease: "easeOut",
+        },
       }}
-      transition={{
-        type: "spring",
-        stiffness: 260,
-        damping: 18,
-      }}
-      style={{
-        transformPerspective: 1000,
-      }}
-      className="
-        group relative overflow-hidden rounded-3xl
-        border border-slate-200
-        bg-white shadow-sm
-        transition-shadow duration-500
-        hover:shadow-2xl
-        dark:border-slate-700
-        dark:bg-slate-900
-      "
+      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition-all hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-500/5"
     >
-      {/* Badge */}
-      {product.badge && (
-        <motion.span
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="
-            absolute left-4 top-4 z-10
-            rounded-full bg-green-600
-            px-3 py-1 text-xs font-bold text-white
-          "
-        >
-          {product.badge}
-        </motion.span>
-      )}
-
-      {/* Wishlist */}
-      <motion.button
-        whileTap={{ scale: 0.8 }}
-        whileHover={{ scale: 1.15 }}
-        onClick={() => toggleWishlist(product)}
-        className="
-          absolute right-4 top-4 z-10
-          flex h-10 w-10 items-center
-          justify-center rounded-full
-          bg-white/90 shadow-md
-          dark:bg-slate-800/90
-        "
-      >
-        <Heart
-          size={19}
-          className={
-            isWishlisted
-              ? "fill-red-500 text-red-500"
-              : "text-slate-600 dark:text-slate-200"
-          }
-        />
-      </motion.button>
-
-      {/* Image */}
-      <div className="relative h-64 overflow-hidden bg-slate-50 dark:bg-slate-800">
-        <motion.img
-          src={product.image}
-          alt={product.name}
-          className="h-full w-full object-cover"
-          whileHover={{
-            scale: 1.12,
-            rotate: 2,
-          }}
-          transition={{
-            duration: 0.5,
-          }}
-        />
-
-        {/* Image overlay */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileHover={{ opacity: 1 }}
-          className="
-            absolute inset-0
-            flex items-center justify-center
-            bg-black/20
-          "
-        >
-          <motion.button
-            whileHover={{
-              scale: 1.1,
-              rotate: 3,
-            }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => onQuickView?.(product)}
-            className="
-              rounded-full bg-white px-5 py-3
-              font-semibold text-slate-900 shadow-xl
-            "
+      {/* ================= IMAGE ================= */}
+      <div>
+        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-slate-50">
+          <Link
+            to={`/products/${product.id}`}
+            className="block h-full w-full"
           >
-            <Eye size={18} className="mr-2 inline" />
-            Quick View
-          </motion.button>
-        </motion.div>
-      </div>
+            <img
+              src={product.image}
+              alt={product.name}
+              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src =
+                  "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=85";
+              }}
+            />
+          </Link>
 
-      {/* Content */}
-      <div className="p-5">
-        <p className="mb-1 text-sm text-green-600">
-          {product.category}
-        </p>
+          {/* Badges */}
+          <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1">
+            {product.badge && (
+              <span className="rounded-full bg-emerald-600/90 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm backdrop-blur-md">
+                {product.badge}
+              </span>
+            )}
 
-        <h3 className="
-          line-clamp-1 text-lg font-bold
-          text-slate-900
-          dark:text-white
-        ">
-          {product.name}
-        </h3>
-
-        <div className="mt-2 flex items-center gap-1">
-          <Star
-            size={16}
-            className="fill-yellow-400 text-yellow-400"
-          />
-
-          <span className="text-sm font-semibold">
-            {product.rating}
-          </span>
-
-          <span className="text-xs text-slate-400">
-            ({product.reviews})
-          </span>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            <span className="
-              text-xl font-black
-              text-slate-900 dark:text-white
-            ">
-              ₹{product.price}
-            </span>
-
-            {product.oldPrice && (
-              <span className="
-                ml-2 text-sm text-slate-400
-                line-through
-              ">
-                ₹{product.oldPrice}
+            {discountPercent && discountPercent > 0 && (
+              <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                -{discountPercent}% OFF
               </span>
             )}
           </div>
 
+          {/* Wishlist */}
           <motion.button
-            whileHover={{
-              scale: 1.08,
-              rotate: -2,
-            }}
-            whileTap={{
-              scale: 0.9,
-            }}
-            onClick={() => addToCart(product)}
-            className="
-              flex h-11 w-11 items-center
-              justify-center rounded-xl
-              bg-green-600 text-white
-              shadow-lg shadow-green-600/20
-            "
+            whileTap={{ scale: 0.85 }}
+            onClick={() => toggleWish(product)}
+            className={`absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition-colors ${
+              liked
+                ? "bg-rose-50 text-rose-500 shadow-sm"
+                : "bg-white/80 text-slate-400 hover:bg-white hover:text-rose-500"
+            }`}
+            aria-label={
+              liked
+                ? "Remove from wishlist"
+                : "Add to wishlist"
+            }
           >
-            <ShoppingCart size={19} />
+            <Heart
+              size={16}
+              fill={liked ? "currentColor" : "none"}
+            />
           </motion.button>
         </div>
+
+        {/* ================= PRODUCT DETAILS ================= */}
+        <div className="mt-3 flex flex-col gap-1 px-1">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+            <span>{product.brand || "DinaMart"}</span>
+            <span>{product.unit || "1 unit"}</span>
+          </div>
+
+          <Link
+            to={`/products/${product.id}`}
+            className="line-clamp-2 text-sm font-semibold text-slate-800 transition-colors group-hover:text-emerald-600"
+          >
+            {product.name}
+          </Link>
+
+          {/* Rating */}
+          <div className="mt-1 flex items-center gap-1.5">
+            <div className="flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700">
+              <Star
+                size={13}
+                className="fill-amber-400 text-amber-400"
+              />
+              <span>{product.rating || "4.8"}</span>
+            </div>
+
+            <span className="text-xs text-slate-400">
+              ({product.reviews || 0})
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= PRICE + CART ================= */}
+      <div className="mt-4 flex items-end justify-between border-t border-slate-100 px-1 pt-3">
+        <div className="flex flex-col">
+          {product.oldPrice && (
+            <del className="text-xs text-slate-400">
+              ₹{product.oldPrice}
+            </del>
+          )}
+
+          <span className="text-lg font-bold leading-none text-slate-900">
+            ₹{product.price}
+          </span>
+        </div>
+
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={() => add(product)}
+          className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/30"
+        >
+          <ShoppingCart size={15} />
+          <span>Add</span>
+        </motion.button>
       </div>
     </motion.article>
   );

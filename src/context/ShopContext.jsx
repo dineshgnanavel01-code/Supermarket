@@ -1,17 +1,20 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-const ShopContext = createContext();
+const ShopContext = createContext(null);
+
+export const useShop = () => {
+  const context = useContext(ShopContext);
+  if (!context) {
+    throw new Error('useShop must be used within a ShopProvider');
+  }
+  return context;
+};
 
 export function ShopProvider({ children }) {
+  // Safe initializers from LocalStorage
   const [cart, setCart] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("dina-cart")) || [];
+      return JSON.parse(localStorage.getItem('dina-cart') || '[]');
     } catch {
       return [];
     }
@@ -19,240 +22,124 @@ export function ShopProvider({ children }) {
 
   const [wishlist, setWishlist] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("dina-wishlist")) || [];
+      return JSON.parse(localStorage.getItem('dina-wish') || '[]');
     } catch {
       return [];
     }
   });
 
-  const [recentlyViewed, setRecentlyViewed] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("dina-recent")) || [];
-    } catch {
-      return [];
-    }
-  });
+  const [toast, setToast] = useState('');
 
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("dina-theme") === "dark";
-  });
-
-  const [cartOpen, setCartOpen] = useState(false);
-  const [toast, setToast] = useState(null);
-  const [coupon, setCoupon] = useState("");
-
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("dina-user")) || null;
-    } catch {
-      return null;
-    }
-  });
-
+  // Persist state changes
   useEffect(() => {
-    localStorage.setItem("dina-cart", JSON.stringify(cart));
+    localStorage.setItem('dina-cart', JSON.stringify(cart));
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem("dina-wishlist", JSON.stringify(wishlist));
+    localStorage.setItem('dina-wish', JSON.stringify(wishlist));
   }, [wishlist]);
 
-  useEffect(() => {
-    localStorage.setItem(
-      "dina-recent",
-      JSON.stringify(recentlyViewed)
-    );
-  }, [recentlyViewed]);
-
-  useEffect(() => {
-    localStorage.setItem("dina-user", JSON.stringify(user));
-  }, [user]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
-    localStorage.setItem(
-      "dina-theme",
-      darkMode ? "dark" : "light"
-    );
-  }, [darkMode]);
-
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-
-    setTimeout(() => {
-      setToast(null);
-    }, 2500);
+  // Toast notification helper
+  const notify = (msg) => {
+    setToast(msg);
+    const timer = setTimeout(() => setToast(''), 2500);
+    return () => clearTimeout(timer);
   };
 
-  const addToCart = (product, quantity = 1) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
+  // Helper to parse price string/number safely
+  const parsePrice = (price) => {
+    if (typeof price === 'number') return price;
+    if (!price) return 0;
+    const clean = String(price).replace(/[^0-9.]/g, '');
+    return parseFloat(clean) || 0;
+  };
+
+  // Cart actions
+  const add = (product) => {
+    setCart((prevCart) => {
+      const existing = prevCart.find((i) => i.id === product.id);
+      const cleanPrice = parsePrice(product.price);
 
       if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + quantity,
-              }
-            : item
+        return prevCart.map((i) =>
+          i.id === product.id ? { ...i, qty: (i.qty || 1) + 1 } : i
         );
       }
-
-      return [
-        ...prev,
-        {
-          ...product,
-          quantity,
-        },
-      ];
+      return [...prevCart, { ...product, price: cleanPrice, qty: 1 }];
     });
-
-    showToast(`${product.name} added to cart`);
-    setCartOpen(true);
+    notify(`Added ${product.name} to cart`);
   };
 
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
-    showToast("Product removed");
-  };
-
-  const updateQuantity = (id, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
-
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity }
-          : item
-      )
+  const update = (id, delta) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = (item.qty || 1) + delta;
+            return newQty > 0 ? { ...item, qty: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean)
     );
   };
 
-  const toggleWishlist = (product) => {
-    setWishlist((prev) => {
-      const exists = prev.some((item) => item.id === product.id);
-
-      if (exists) {
-        showToast("Removed from wishlist");
-        return prev.filter((item) => item.id !== product.id);
-      }
-
-      showToast("Added to wishlist ❤️");
-      return [...prev, product];
-    });
+  const remove = (id) => {
+    setCart((prevCart) => prevCart.filter((i) => i.id !== id));
+    notify('Item removed from cart');
   };
 
-  const isWishlisted = (id) => {
-    return wishlist.some((item) => item.id === id);
-  };
+  const clearCart = () => setCart([]);
 
-  const addRecentlyViewed = (product) => {
-    setRecentlyViewed((prev) => {
-      const filtered = prev.filter(
-        (item) => item.id !== product.id
-      );
-
-      return [product, ...filtered].slice(0, 6);
-    });
-  };
-
-  const clearCart = () => {
-    setCart([]);
-  };
-
-  const login = (userData) => {
-    setUser(userData);
-    showToast("Welcome to Dina-Mart 👋");
-  };
-
-  const logout = () => {
-    setUser(null);
-    showToast("Logged out successfully");
-  };
-
-  const cartCount = useMemo(
-    () =>
-      cart.reduce(
-        (total, item) => total + item.quantity,
-        0
-      ),
-    [cart]
-  );
-
-  const subtotal = useMemo(
-    () =>
-      cart.reduce(
-        (total, item) =>
-          total + item.price * item.quantity,
-        0
-      ),
-    [cart]
-  );
-
-  const delivery = subtotal >= 999 || subtotal === 0 ? 0 : 49;
-
-  const discount = coupon === "DINA10" ? subtotal * 0.1 : 0;
-
-  const grandTotal = subtotal + delivery - discount;
-
-  const applyCoupon = (code) => {
-    if (code.trim().toUpperCase() === "DINA10") {
-      setCoupon("DINA10");
-      showToast("10% coupon applied 🎉");
-      return true;
+  // Wishlist toggle
+  const toggleWish = (product) => {
+    const isLiked = wishlist.some((x) => x.id === product.id);
+    if (isLiked) {
+      setWishlist((prev) => prev.filter((x) => x.id !== product.id));
+      notify('Removed from wishlist');
+    } else {
+      setWishlist((prev) => [...prev, product]);
+      notify('Added to wishlist');
     }
-
-    showToast("Invalid coupon code", "error");
-    return false;
   };
 
-  const value = {
-    cart,
-    wishlist,
-    recentlyViewed,
-    darkMode,
-    cartOpen,
-    toast,
-    user,
-    coupon,
+  // Derived Values
+  const cartCount = useMemo(() => {
+    return cart.reduce((total, item) => total + (Number(item.qty) || 0), 0);
+  }, [cart]);
 
-    cartCount,
-    subtotal,
-    delivery,
-    discount,
-    grandTotal,
+  const subtotal = useMemo(() => {
+    return cart.reduce((sum, item) => {
+      const p = parsePrice(item.price);
+      const q = Number(item.qty) || 0;
+      return sum + p * q;
+    }, 0);
+  }, [cart]);
 
-    setDarkMode,
-    setCartOpen,
-    setToast,
-
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    toggleWishlist,
-    isWishlisted,
-
-    addRecentlyViewed,
-
-    clearCart,
-    applyCoupon,
-
-    login,
-    logout,
-    showToast,
-  };
+  const delivery = subtotal > 0 ? (subtotal >= 499 ? 0 : 40) : 0;
+  const discount = subtotal >= 999 ? 100 : 0;
+  const total = Math.max(0, subtotal + delivery - discount);
 
   return (
-    <ShopContext.Provider value={value}>
+    <ShopContext.Provider
+      value={{
+        cart,
+        cartCount,
+        wishlist,
+        toast,
+        subtotal,
+        delivery,
+        discount,
+        total,
+        add,
+        update,
+        remove,
+        clearCart,
+        toggleWish,
+        notify,
+      }}
+    >
       {children}
     </ShopContext.Provider>
   );
-}
-
-export function useShop() {
-  return useContext(ShopContext);
 }
