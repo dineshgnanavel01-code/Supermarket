@@ -63,7 +63,29 @@ function ShopApp() {
           </Routes>
         </motion.main>
       </AnimatePresence>
+<section id="home">
+  {/* Home */}
+</section>
 
+<section id="products">
+  {/* Products */}
+</section>
+
+<section id="deals">
+  {/* Deals */}
+</section>
+
+<section id="wishlist">
+  {/* Wishlist */}
+</section>
+
+<section id="cart">
+  {/* Cart */}
+</section>
+
+<section id="account">
+  {/* Account */}
+</section>
       <Footer />
     </div>
   );
