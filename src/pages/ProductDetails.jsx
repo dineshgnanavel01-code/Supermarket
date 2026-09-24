@@ -58,7 +58,7 @@ export default function ProductDetails() {
           Products
         </Link>
         <ChevronRight size={14} className="text-slate-300" />
-        <span className="text-slate-900 truncate max-w-[200px]">{p.name}</span>
+        <span className="text-slate-900 truncate max-w-full">{p.name}</span>
       </nav>
 
       {/* Main Product Showcase Card */}

@@ -66,7 +66,7 @@ export default function Products() {
     <main className="container mx-auto px-4 py-8">
       {/* Banner Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 p-8 text-white shadow-md">
-        <div className="relative z-10 max-w-xl">
+        <div className="relative z-10 max-w-full">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-bold text-lime-300 backdrop-blur-xs border border-lime-300/20">
             <Sparkles size={12} /> DINA MART COLLECTION
           </span>

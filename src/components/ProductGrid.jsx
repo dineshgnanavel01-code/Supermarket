@@ -9,7 +9,7 @@ export default function ProductGrid({ products, onResetFilters }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="mx-auto my-8 flex max-w-md flex-col items-center justify-center rounded-3xl border border-slate-100 bg-gradient-to-b from-slate-50/50 to-white p-10 text-center shadow-sm"
+        className="mx-auto my-8 flex max-w-full flex-col items-center justify-center rounded-3xl border border-slate-100 bg-gradient-to-b from-slate-50/50 to-white p-10 text-center shadow-sm"
       >
         {/* Animated Icon Box */}
         <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shadow-inner">
